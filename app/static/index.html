@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Keitaro Wrapper — Кампании и потоки</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div><strong>Keitaro Wrapper</strong><small>Управление кампаниями</small></div></div>
+      <nav><button class="nav active" data-tab="create">Создание кампании</button><button class="nav" data-tab="edit">Редактор офферов</button></nav>
+      <div class="side-bottom"><a href="/docs" target="_blank" rel="noopener">API / Swagger ↗</a></div>
+    </aside>
+    <main class="content">
+      <header class="top"><div><h1 id="page-title">Создание кампании</h1></div><span class="pill" id="write-pill">Загрузка настроек…</span></header>
+      <div id="notice" role="status" aria-live="polite" class="notice hidden"></div>
+      <section id="create" class="tab">
+        <div class="card"><div class="card-head"><h2>Новая кампания</h2></div>
+          <form id="campaign-form" novalidate><div class="grid two">
+            <div class="wide campaign-name-block">
+              <label for="name-suffix">Название кампании *</label>
+              <div class="campaign-name-composer" id="campaign-name-composer">
+                <span id="name-prefix" class="campaign-name-prefix" aria-label="Префикс кампании">test_yoursurname_</span>
+                <input id="name-suffix" class="campaign-name-suffix" type="text" value="campaign1" required autocomplete="off" spellcheck="false" aria-describedby="name-error" aria-label="Название после префикса" />
+              </div>
+              <input id="name" type="hidden" value="" />
+              <div class="campaign-name-preview"><span>Итоговое название в Keitaro</span><output id="full-name" for="name-suffix" aria-live="polite">test_yoursurname_campaign1</output></div>
+              <small id="name-error" class="name-error hidden" aria-live="polite"></small>
+            </div>
+            <label>Страна (ISO 3166-1 alpha-2) *<input id="country" required value="DE" maxlength="2" minlength="2" pattern="[A-Za-z]{2}" autocomplete="off"><small id="country-error" class="field-error hidden" role="alert"></small></label>
+            <div class="wide">
+              <label for="offer-query">Оффер — введите ID или часть названия <span aria-hidden="true">*</span></label>
+              <div class="offer-combobox" id="offer-combobox">
+                <input id="offer-query" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-haspopup="listbox" aria-controls="offer-options" autocomplete="off" spellcheck="false" required placeholder="Например: 18813 или Flexacil" />
+                <button id="offer-toggle" type="button" aria-label="Показать доступные офферы" aria-controls="offer-options" aria-expanded="false">⌄</button>
+                <div id="offer-options" class="offer-options hidden" role="listbox" aria-label="Результаты поиска оффера"></div>
+              </div>
+              <input type="hidden" id="offer_id" value="" />
+              <small id="offer-count"></small>
+              <small id="offer-check" role="status" aria-live="polite" class="offer-check"></small>
+              <small id="offer-error" class="field-error hidden" role="alert"></small>
+            </div>
+          </div>
+          <details id="advanced-settings" class="advanced">
+            <summary>Домен, группа и источник <span class="summary-muted">— можно использовать настройки по умолчанию</span></summary>
+            
+            <div class="grid two">
+              <label>Домен<select id="domain_id"><option value="">Загрузить список…</option></select><small id="domain-error" class="field-error hidden" role="alert"></small></label>
+              <label>Группа кампаний<select id="group_id"><option value="">Загрузить список…</option></select><small id="group-error" class="field-error hidden" role="alert"></small></label>
+              <label>Источник трафика<select id="traffic_source_id"><option value="">Загрузить список…</option></select><small id="source-error" class="field-error hidden" role="alert"></small></label>
+            </div>
+          </details>
+          <p id="settings-status" class="settings-status" role="status">Проверяем дополнительные параметры…</p>
+          <div class="buttons"><button type="submit" id="create-button" class="btn primary">Создать кампанию</button><button type="button" id="refresh-lookups" class="btn secondary">Обновить данные</button></div></form>
+        </div>
+      </section>
+      <section id="edit" class="tab hidden">
+        <div class="card">
+          <div class="card-head"><h2>Редактор потоков</h2></div>
+          <div class="demo-controls" id="demo-controls">
+            <button class="btn secondary" id="demo-start" type="button">Демо · 3 оффера</button>
+            <button class="btn secondary hidden" id="demo-exit" type="button">Закрыть демо</button>
+            
+          </div>
+          <div id="real-campaign-picker">
+            <div class="grid two">
+              <label>Мои кампании<select id="owned-list"><option value="">Выберите кампанию</option></select></label>
+              <details class="advanced compact-detail"><summary>Посмотреть другую кампанию по ID (без редактирования)</summary>
+                <label>Кампания по ID<input id="lookup-id" type="number" min="1" placeholder="ID кампании"></label>
+              </details>
+            </div>
+            <div class="buttons"><button class="btn secondary" id="refresh-owned" type="button">Обновить список</button><button class="btn primary" id="open-campaign" type="button">Открыть</button></div>
+          </div>
+        </div>
+        <div id="campaign-detail" class="card hidden">
+          <div class="flex-head"><h2 id="campaign-heading">Кампания</h2><span class="pill" id="edit-status">Только чтение</span></div>
+          <div class="buttons compact">
+            <button id="fetch-streams" class="btn secondary" type="button">Fetch streams from KT</button>
+            <button id="reload-detail" class="btn secondary" type="button">Обновить отображение</button>
+            <button id="demo-reset" class="btn secondary hidden" type="button">Сбросить демо</button>
+            <button id="demo-remote-remove" class="btn secondary hidden" type="button">Имитировать внешнее удаление</button>
+          </div>
+          <div id="stream-summary"></div>
+          <div id="draft-editor" class="hidden">
+            <p class="demo-alert hidden" id="demo-alert">Демо · изменения только в браузере</p>
+            <div id="draft-banner" class="draft-banner">Нет неопубликованных изменений</div>
+            <div class="buttons compact"><button id="push-editor" type="button" class="btn primary">↑ Push to KT</button><button id="cancel-editor" type="button" class="btn secondary">× Cancel</button></div>
+            <h3>Офферы</h3>
+            <div id="offer-table"></div>
+            <div class="card-internal">
+              <h3>Добавить оффер</h3>
+              <div class="editor-picker-row">
+                <div class="editor-picker-field">
+                  <label for="editor-offer-query">Оффер — поиск по ID или названию</label>
+                  <div class="offer-combobox" id="editor-offer-combobox">
+                    <input id="editor-offer-query" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-haspopup="listbox" aria-controls="editor-offer-options" autocomplete="off" placeholder="Например: 18813 или Flexacil" />
+                    <button id="editor-offer-toggle" type="button" aria-label="Показать список офферов" aria-expanded="false">⌄</button>
+                    <div id="editor-offer-options" class="offer-options hidden" role="listbox" aria-label="Офферы для добавления"></div>
+                  </div>
+                  <small id="editor-offer-help"></small>
+                </div>
+                <button id="add-offer" class="btn primary" type="button">+ Add</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+  <script src="/static/app.js" defer></script>
+</body></html>
